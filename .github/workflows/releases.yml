@@ -1,0 +1,153 @@
+name: Build docsets from godot-docs artifacts and publish release
+on:
+  workflow_dispatch:
+  # Add scheduled trigger if needed:
+  # schedule:
+  #   - cron: '0 1 * * 1' # Every Monday 01:00 UTC after upstream run
+env:
+  stable_version: '4.5'
+  upstream_owner: 'godotengine'
+  upstream_repo: 'godot-docs'
+  upstream_workflow_filename: 'build.yml' # The workflow file name or id to find runs
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Checkout self repo
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip tar python3-pip
+          python3 -m pip install --upgrade pip
+          python3 -m pip install doc2dash requests
+      - name: Get latest successful upstream run for build.yml
+        id: upstream_run
+        run: |
+          # Get the latest successful run of the build.yml workflow on godot-docs repo
+          echo "Fetching latest workflow runs from ${UPSTREAM_OWNER}/${UPSTREAM_REPO}..."
+          runs_json=$(curl -s "https://api.github.com/repos/${UPSTREAM_OWNER}/${UPSTREAM_REPO}/actions/workflows/${UPSTREAM_WORKFLOW_FILENAME}/runs?status=success&per_page=1")
+          # Parse id, html_url, and created_at
+          run_id=$(echo "$runs_json" | jq -r '.workflow_runs[0].id')
+          run_html_url=$(echo "$runs_json" | jq -r '.workflow_runs[0].html_url')
+          run_created_at=$(echo "$runs_json" | jq -r '.workflow_runs[0].created_at')
+
+          if [[ "$run_id" == "null" ]]; then
+            echo "No successful upstream run found"
+            exit 1
+          fi
+          echo "Upstream run id: $run_id"
+          echo "Upstream run url: $run_html_url"
+          echo "Run created at: $run_created_at"
+
+          # Convert date to yyyymmdd
+          run_date=$(date -d "$run_created_at" +%Y%m%d)
+          echo "run_date=$run_date" >> $GITHUB_OUTPUT
+          echo "run_id=$run_id" >> $GITHUB_OUTPUT
+          echo "run_html_url=$run_html_url" >> $GITHUB_OUTPUT
+      - name: Download godot-docs-html-*.zip artifacts from upstream run
+        id: download_artifacts
+        run: |
+          set -euo pipefail
+          run_id=${{ steps.upstream_run.outputs.run_id }}
+          owner=${{ env.upstream_owner }}
+          repo=${{ env.upstream_repo }}
+
+          echo "Listing artifacts for upstream run $run_id"
+          artifacts_json=$(curl -s "https://api.github.com/repos/$owner/$repo/actions/runs/$run_id/artifacts")
+
+          # Filter artifact names starting with godot-docs-html-
+          artifact_ids=$(echo "$artifacts_json" | jq -r '.artifacts[] | select(.name|test("^godot-docs-html-")) | .id')
+
+          if [[ -z "$artifact_ids" ]]; then
+            echo "No matching artifacts found"
+            exit 1
+          fi
+
+          mkdir artifacts
+          cd artifacts
+
+          for artifact_id in $artifact_ids; do
+            echo "Downloading artifact ID $artifact_id"
+            # Get archive download url
+            archive_url=$(curl -s "https://api.github.com/repos/$owner/$repo/actions/artifacts/$artifact_id/zip" -L -o artifact.zip)
+            # Actually download with curl and follow redirects:
+            curl -L -o artifact.zip "https://api.github.com/repos/$owner/$repo/actions/artifacts/$artifact_id/zip"
+            # Extract to folder named after artifact id
+            mkdir "$artifact_id"
+            unzip -q artifact.zip -d "$artifact_id"
+            # Remove zip file to save space
+            rm artifact.zip
+          done
+        shell: bash
+      - name: Decompress godot-docs-html-*.zip to folders godot-docs-html-branchname
+        run: |
+          # We extracted archives in artifacts/<id>/*.zip; unzip again any .zip inside, rename to godot-docs-html-branch
+          cd artifacts
+          for dir in */ ; do
+            cd "$dir"
+            for zipf in *.zip; do
+              echo "Extracting $zipf"
+              unzip -q "$zipf" -d "../godot-docs-html-${zipf%.zip}"
+              # Remove inner zip
+              rm "$zipf"
+            done
+            cd ..
+          done
+
+          # Clean up extracted artifact folders
+          rm -rf */
+      - name: Prepare docsets with doc2dash and icons
+        run: |
+          # install doc2dash was done in dependencies already
+          # Download icons
+          curl -s -o icon.png https://raw.githubusercontent.com/Kapeli/Dash-User-Contributions/master/docsets/Godot/icon.png
+          curl -s -o icon@2x.png https://raw.githubusercontent.com/Kapeli/Dash-User-Contributions/master/docsets/Godot/icon@2x.png
+
+          for branch in master stable 3.6; do
+            folder="godot-docs-html-$branch"
+            if [ ! -d "$folder" ]; then
+              echo "Folder $folder not found, skipping"
+              continue
+            fi
+            cp icon.png icon@2x.png "$folder/"
+            # Run doc2dash
+            doc2dash --name "godot-$branch" -f "$folder/_build/html"
+          done
+      - name: Create tgz archive of docsets
+        run: |
+          for branch in master stable 3.6; do
+            ds_name="godot-$branch.docset"
+            tgz_name="Godot-docset-$branch.tgz"
+            if [ -d "$ds_name" ]; then
+              tar --exclude='.DS_Store' -czf "$tgz_name" "$ds_name"
+            else
+              echo "Docset folder $ds_name not found, skipping tar"
+            fi
+          done
+      - name: Create or update release and upload .tgz assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            Godot-docset-master.tgz
+            Godot-docset-stable.tgz
+            Godot-docset-3.6.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.upstream_run.outputs.run_date }}
+      - name: Add release description
+        run: |
+          tag=${{ steps.upstream_run.outputs.run_date }}
+          body="[${{ env.upstream_owner }}/${{ env.upstream_repo }}](${ {steps.upstream_run.outputs.run_html_url} })"
+          echo "Adding release body for tag $tag"
+          curl \
+            -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository_owner }}/${{ github.repository }}/releases/tags/$tag" \
+            -d "{\"body\":\"$body\"}"
+      - name: Output done
+        run: echo "Docset release created with tag ${{ steps.upstream_run.outputs.run_date }}"
