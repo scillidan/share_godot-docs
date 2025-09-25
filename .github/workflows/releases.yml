@@ -96,23 +96,23 @@ jobs:
           rm artifact.zip
         done
         
-        echo "Contents of artifacts directory:"
+        echo "Contents of artifacts directory after extraction:"
         ls -l
         
-        # Now the extraction to expected folders:
-        for d in */ ; do
-          echo "Processing directory $d"
-          inner_folder=$(find "$d" -maxdepth 1 -type d -name 'godot-docs-html-*' | head -n1)
-          if [ -n "$inner_folder" ]; then
-            base_folder=$(basename "$inner_folder")
-            echo "Copying $inner_folder to workspace root as $base_folder"
-            cp -r "$inner_folder" ../../"$base_folder"
+        cd ..
+        
+        # Now copy godot-docs-html-* folders from inside the extracted artifacts to root workspace
+        for artifact_dir in artifacts/*; do
+          echo "Looking inside $artifact_dir"
+          doc_folder=$(find "$artifact_dir" -maxdepth 1 -type d -name "godot-docs-html-*")
+          if [ -n "$doc_folder" ]; then
+            base_folder=$(basename "$doc_folder")
+            echo "Copying $doc_folder to workspace root as $base_folder"
+            cp -r "$doc_folder" "$base_folder"
           else
-            echo "No godot-docs-html-* folder found in $d"
+            echo "No godot-docs-html-* folder found inside $artifact_dir"
           fi
         done
-        
-        cd ..
 
     - name: Prepare docsets with doc2dash and icons
       run: |
