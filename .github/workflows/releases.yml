@@ -131,7 +131,7 @@ jobs:
           fi
         done
 
-    - name: Create or update release and upload .tgz assets
+    - name: Create or update release and upload .tgz assets with body
       uses: softprops/action-gh-release@v1
       with:
         files: |
@@ -140,6 +140,8 @@ jobs:
           Godot-docset-3.6.tgz
         tag_name: ${{ steps.upstream_run.outputs.run_date }}
         name: Release ${{ steps.upstream_run.outputs.run_date }}
+        body: |
+          [${{ env.upstream_owner }}/${{ env.upstream_repo }}@${{ steps.upstream_run.outputs.run_id }}](${{ steps.upstream_run.outputs.run_html_url }})
         draft: false
         prerelease: false
       env:
