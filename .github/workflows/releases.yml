@@ -103,20 +103,6 @@ jobs:
           rm artifact.zip
         done
 
-    - name: Decompress godot-docs-html-*.zip to folders godot-docs-html-branch
-      run: |
-        cd artifacts
-        for dir in */ ; do
-          cd "$dir"
-          for zipf in *.zip; do
-            echo "Extracting $zipf"
-            unzip -q "$zipf" -d "../godot-docs-html-${zipf%.zip}"
-            rm "$zipf"
-          done
-          cd ..
-        done
-        rm -rf */
-
     - name: Prepare docsets with doc2dash and icons
       run: |
         curl -s -o icon.png https://raw.githubusercontent.com/Kapeli/Dash-User-Contributions/master/docsets/Godot/icon.png
