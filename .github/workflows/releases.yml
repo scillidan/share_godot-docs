@@ -148,24 +148,34 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Add release description with link to upstream run
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         tag=${{ steps.upstream_run.outputs.run_date }}
         body="[${{ env.upstream_owner }}/${{ env.upstream_repo }}@${{ steps.upstream_run.outputs.run_id }}](${{ steps.upstream_run.outputs.run_html_url }})"
         echo "Updating release $tag body with upstream run link"
+    
+        # Compose repo from github context
+        repo_owner=${{ github.repository_owner }}
+        repo_name=${{ github.repository }}
+    
         release_id=$(curl -s \
-          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Authorization: Bearer $GITHUB_TOKEN" \
           -H "Accept: application/vnd.github+json" \
-          "https://api.github.com/repos/${{ github.repository_owner }}/${{ github.repository }}/releases/tags/$tag" \
+          "https://api.github.com/repos/$repo_owner/$repo_name/releases/tags/$tag" \
           | jq -r '.id')
+    
         if [ "$release_id" = "null" ] || [ -z "$release_id" ]; then
           echo "Release not found for tag $tag"
           exit 1
         fi
+    
         curl -s -X PATCH \
-          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Authorization: Bearer $GITHUB_TOKEN" \
           -H "Accept: application/vnd.github+json" \
-          "https://api.github.com/repos/${{ github.repository_owner }}/${{ github.repository }}/releases/$release_id" \
+          "https://api.github.com/repos/$repo_owner/$repo_name/releases/$release_id" \
           -d "{\"body\":\"$body\"}"
+    
         echo "Release description updated"
 
     - name: Done
