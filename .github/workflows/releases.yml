@@ -95,7 +95,9 @@ jobs:
     
         for artifact_id in $artifact_ids; do
           echo "Downloading artifact ID $artifact_id"
-          curl -L -H "Authorization: Bearer $GITHUB_TOKEN" -o artifact.zip "https://github.com/$owner/$repo/actions/runs/$run_id/artifacts/$artifact_id/zip"
+          curl -L -H "Authorization: Bearer $GITHUB_TOKEN" \
+               -o artifact.zip \
+               "https://api.github.com/repos/$owner/$repo/actions/artifacts/$artifact_id/zip"
           mkdir "$artifact_id"
           unzip -q artifact.zip -d "$artifact_id"
           rm artifact.zip
