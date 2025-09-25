@@ -28,19 +28,19 @@ jobs:
         python3 -m pip install --upgrade pip
         python3 -m pip install doc2dash requests jq
 
-    - name: Get workflow ID of build.yml
+    - name: Get workflow ID of build_offline_docs.yml
       id: workflow_id
       run: |
-        echo "Looking up workflow ID for build.yml"
+        echo "Looking up workflow ID for build_offline_docs.yml"
         wf_json=$(curl -s "https://api.github.com/repos/${{ env.upstream_owner }}/${{ env.upstream_repo }}/actions/workflows")
-        id=$(echo "$wf_json" | jq -r '.workflows[] | select(.path == "build.yml") | .id')
+        id=$(echo "$wf_json" | jq -r '.workflows[] | select(.path == "build_offline_docs.yml") | .id')
         if [ -z "$id" ] || [ "$id" == "null" ]; then
-          echo "Workflow build.yml not found"
+          echo "Workflow build_offline_docs.yml not found"
           exit 1
         fi
         echo "workflow_id=$id" >> $GITHUB_OUTPUT
 
-    - name: Get latest successful upstream run for build.yml
+    - name: Get latest successful upstream run for build_offline_docs.yml
       id: upstream_run
       run: |
         # Use workflow_id from previous step
