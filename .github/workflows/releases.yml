@@ -108,17 +108,18 @@ jobs:
     - name: Move and prepare extracted folders for doc2dash
       run: |
         cd artifacts
-
-        # Move downloaded artifact folders to parent directory with shortened names
-        for dir in godot-docs-html-*; do
-          # Move up one directory after cd
-          branch=${dir#godot-docs-html-}
-          target="../godot-docs-html-$branch"
-          echo "Renaming $dir => $target"
-          rm -rf "$target"
-          mv "$dir" "$target"
+        for d in */ ; do
+          # Detect folder inside the artifact folder e.g. godot-docs-html-master
+          inner_folder=$(find "$d" -maxdepth 1 -type d -name 'godot-docs-html-*' | head -n1)
+          if [ -n "$inner_folder" ]; then
+            base_folder=$(basename "$inner_folder")
+            echo "Copying $inner_folder to workspace root as $base_folder"
+            cp -r "$inner_folder" ../../"$base_folder"
+          else
+            echo "No godot-docs-html-* folder found in $d"
+          fi
         done
-      shell: bash
+        cd ..
 
     - name: List extracted folders for debugging
       run: ls -ld ../godot-docs-html-*
@@ -146,9 +147,9 @@ jobs:
           cp icon.png icon@2x.png "$folder/"
           doc2dash --name "godot-$branch" -f "$folder/_build/html"
         done
-
-    - name: List generated docsets for debugging
-      run: ls -ld godot-*.docset
+    
+    - name: List prepared doc folders
+      run: ls -d godot-docs-html-*
 
     - name: Create tgz archives of docsets
       run: |
