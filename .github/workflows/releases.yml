@@ -70,21 +70,16 @@ jobs:
         echo "run_date=$run_date" >> $GITHUB_OUTPUT
         echo "run_id=$run_id" >> $GITHUB_OUTPUT
         echo "run_html_url=$run_html_url" >> $GITHUB_OUTPUT
-
+    
     - name: Download godot-docs-html-*.zip artifacts from upstream run
-      id: download_artifacts
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        upstream_owner: ${{ env.upstream_owner }}
-        upstream_repo: ${{ env.upstream_repo }}
       run: |
         set -euo pipefail
         run_id=${{ steps.upstream_run.outputs.run_id }}
-        owner=$upstream_owner
-        repo=$upstream_repo
+        owner=${{ env.upstream_owner }}
+        repo=${{ env.upstream_repo }}
     
         echo "Listing artifacts for upstream run $run_id"
-        artifacts_json=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$owner/$repo/actions/runs/$run_id/artifacts")
+        artifacts_json=$(curl -s "https://api.github.com/repos/$owner/$repo/actions/runs/$run_id/artifacts")
     
         artifact_ids=$(echo "$artifacts_json" | jq -r '.artifacts[] | select(.name|test("^godot-docs-html-")) | .id')
     
@@ -98,7 +93,7 @@ jobs:
     
         for artifact_id in $artifact_ids; do
           echo "Downloading artifact ID $artifact_id"
-          curl -L -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/octet-stream" -o artifact.zip "https://api.github.com/repos/$owner/$repo/actions/artifacts/$artifact_id/zip"
+          curl -L -o artifact.zip "https://github.com/$owner/$repo/actions/runs/$run_id/artifacts/$artifact_id"
           mkdir "$artifact_id"
           unzip -q artifact.zip -d "$artifact_id"
           rm artifact.zip
