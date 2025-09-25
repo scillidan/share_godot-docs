@@ -71,22 +71,37 @@ jobs:
         run_id=${{ steps.upstream_run.outputs.run_id }}
         owner=${{ env.upstream_owner }}
         repo=${{ env.upstream_repo }}
-    
+        
         echo "Listing artifacts for upstream run $run_id"
         artifacts_json=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$owner/$repo/actions/runs/$run_id/artifacts")
-    
-        artifact_ids=$(echo "$artifacts_json" | jq -r '.artifacts[] | select(.name|test("^godot-docs-html-")) | .id')
-    
+        
+        artifact_ids=$(echo "$artifacts_json" | jq -r '.artifacts[] | select(.name | test("^godot-docs-html-")) | .id')
+        
+        echo "Found artifact IDs: $artifact_ids"
         if [[ -z "$artifact_ids" ]]; then
           echo "No matching artifacts found"
           exit 1
         fi
-    
+        
         mkdir -p artifacts
-        # inside Download step after extraction ends
         cd artifacts
+        
+        for artifact_id in $artifact_ids; do
+          echo "Downloading artifact ID $artifact_id"
+          curl -L -H "Authorization: Bearer $GITHUB_TOKEN" \
+               -o artifact.zip \
+               "https://api.github.com/repos/$owner/$repo/actions/artifacts/$artifact_id/zip"
+          mkdir "$artifact_id"
+          unzip -q artifact.zip -d "$artifact_id"
+          rm artifact.zip
+        done
+        
+        echo "Contents of artifacts directory:"
+        ls -l
+        
+        # Now the extraction to expected folders:
         for d in */ ; do
-          # Detect folder inside the artifact folder e.g. godot-docs-html-master
+          echo "Processing directory $d"
           inner_folder=$(find "$d" -maxdepth 1 -type d -name 'godot-docs-html-*' | head -n1)
           if [ -n "$inner_folder" ]; then
             base_folder=$(basename "$inner_folder")
@@ -96,6 +111,7 @@ jobs:
             echo "No godot-docs-html-* folder found in $d"
           fi
         done
+        
         cd ..
 
     - name: Prepare docsets with doc2dash and icons
