@@ -14,10 +14,14 @@ jobs:
       contents: write
       actions: read
     env:
+      # Just declare token here, other env vars inherited automatically
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      stable_version: ${{ env.stable_version }}
-      upstream_owner: ${{ env.upstream_owner }}
-      upstream_repo: ${{ env.upstream_repo }}
+    steps:
+      - name: Print env vars
+        run: |
+          echo "stable_version: $stable_version"
+          echo "upstream_owner: $upstream_owner"
+          echo "upstream_repo: $upstream_repo"
 
     steps:
     - name: Checkout self repo
