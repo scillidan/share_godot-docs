@@ -62,6 +62,23 @@ jobs:
         echo "run_date=$run_date" >> $GITHUB_OUTPUT
         echo "run_id=$run_id" >> $GITHUB_OUTPUT
         echo "run_html_url=$run_html_url" >> $GITHUB_OUTPUT
+
+        echo "run_id=${{ steps.upstream_run.outputs.run_id }}"
+        echo "owner=${{ env.upstream_owner }}"
+        echo "repo=${{ env.upstream_repo }}"
+        echo "GITHUB_TOKEN is set: ${GITHUB_TOKEN:+yes}"
+        
+        artifacts_json=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$owner/$repo/actions/runs/$run_id/artifacts")
+        echo "List artifacts response:"
+        echo "$artifacts_json" | jq .
+        
+        artifact_ids=$(echo "$artifacts_json" | jq -r '.artifacts[] | select(.name | test("^godot-docs-html-")) | .id')
+        echo "Found artifact IDs: $artifact_ids"
+        
+        if [[ -z "$artifact_ids" ]]; then
+          echo "No matching artifacts found"
+          exit 1
+        fi
     
     - name: Download godot-docs-html-*.zip artifacts from upstream run
       env:
