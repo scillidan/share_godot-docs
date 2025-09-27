@@ -123,10 +123,9 @@ jobs:
         # Copy godot-docs-html-* folders found anywhere inside artifacts/* to workspace root
         for artifact_dir in artifacts/*; do
           echo "Looking inside $artifact_dir"
-          # Find godot-docs-html-* directories anywhere inside artifact_dir (recursive)
-          found_folders=$(find "$artifact_dir" -type d -name "godot-docs-html-*")
-          if [ -n "$found_folders" ]; then
-            for doc_folder in $found_folders; do
+          doc_folders=$(find "$artifact_dir" -type d -name "godot-docs-html-*")
+          if [ -n "$doc_folders" ]; then
+            for doc_folder in $doc_folders; do
               base_folder=$(basename "$doc_folder")
               echo "Copying $doc_folder to workspace root as $base_folder"
               cp -r "$doc_folder" "$base_folder"
