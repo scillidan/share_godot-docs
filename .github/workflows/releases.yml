@@ -111,21 +111,24 @@ jobs:
           mkdir "$artifact_id"
           unzip -q artifact.zip -d "$artifact_id"
           rm artifact.zip
+          
+          echo "Listing contents of artifacts/$artifact_id:"
+          ls -lR "$artifact_id"
         done
-        
-        echo "Contents of artifacts directory after extraction:"
-        ls -l
         
         cd ..
         
-        # Now copy godot-docs-html-* folders from inside the extracted artifacts to root workspace
+        # Copy godot-docs-html-* folders found anywhere inside artifacts/* to workspace root
         for artifact_dir in artifacts/*; do
           echo "Looking inside $artifact_dir"
-          doc_folder=$(find "$artifact_dir" -maxdepth 1 -type d -name "godot-docs-html-*")
-          if [ -n "$doc_folder" ]; then
-            base_folder=$(basename "$doc_folder")
-            echo "Copying $doc_folder to workspace root as $base_folder"
-            cp -r "$doc_folder" "$base_folder"
+          # Find godot-docs-html-* directories anywhere inside artifact_dir (recursive)
+          found_folders=$(find "$artifact_dir" -type d -name "godot-docs-html-*")
+          if [ -n "$found_folders" ]; then
+            for doc_folder in $found_folders; do
+              base_folder=$(basename "$doc_folder")
+              echo "Copying $doc_folder to workspace root as $base_folder"
+              cp -r "$doc_folder" "$base_folder"
+            done
           else
             echo "No godot-docs-html-* folder found inside $artifact_dir"
           fi
