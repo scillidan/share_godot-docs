@@ -151,7 +151,7 @@ jobs:
           cp icon.png icon@2x.png "$folder/"
           # Replace dot '.' in branch by underscore '_'
           name_branch=$(echo "$branch" | tr '.' '_')
-          doc2dash --name "godot-$name_branch" -f "$folder/_build/html"
+          doc2dash --name "godot-$name_branch" -f "$folder"
         done
     - name: Create tgz archive of docsets
       run: |
