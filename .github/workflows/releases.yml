@@ -105,34 +105,37 @@ jobs:
         mkdir -p artifacts
         cd artifacts
         
-        for artifact_id in $artifact_ids; do
-          echo "Downloading artifact ID $artifact_id"
+        # Get artifact info JSON
+        artifacts_json=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+          "https://api.github.com/repos/$owner/$repo/actions/runs/$run_id/artifacts")
+        
+        # Extract name and id pairs for matching artifacts
+        mapfile -t artifact_lines < <(echo "$artifacts_json" | jq -c '.artifacts[] | select(.name | test("^godot-docs-html-")) | {id: .id, name: .name}')
+        
+        for artifact_json in "${artifact_lines[@]}"; do
+          artifact_id=$(echo "$artifact_json" | jq -r '.id')
+          artifact_name=$(echo "$artifact_json" | jq -r '.name')
+        
+          echo "Downloading artifact $artifact_name with ID $artifact_id"
           curl -L -H "Authorization: Bearer $GITHUB_TOKEN" \
                -o artifact.zip \
                "https://api.github.com/repos/$owner/$repo/actions/artifacts/$artifact_id/zip"
-          mkdir "$artifact_id"
-          unzip -q artifact.zip -d "$artifact_id"
-          rm artifact.zip
           
-          echo "Listing contents of artifacts/$artifact_id:"
-          ls -lR "$artifact_id"
+          # Extract into folder named exactly as artifact_name
+          mkdir -p "$artifact_name"
+          unzip -q artifact.zip -d "$artifact_name"
+          rm artifact.zip
+        
+          echo "Listing contents of $artifact_name:"
+          ls -lR "$artifact_name"
         done
         
         cd ..
         
-        # Copy godot-docs-html-* folders found anywhere inside artifacts/* to workspace root
-        for artifact_dir in artifacts/*; do
-          echo "Looking inside $artifact_dir"
-          doc_folders=$(find "$artifact_dir" -type d -name "godot-docs-html-*")
-          if [ -n "$doc_folders" ]; then
-            for doc_folder in $doc_folders; do
-              base_folder=$(basename "$doc_folder")
-              echo "Copying $doc_folder to workspace root as $base_folder"
-              cp -r "$doc_folder" "$base_folder"
-            done
-          else
-            echo "No godot-docs-html-* folder found inside $artifact_dir"
-          fi
+        for folder in artifacts/godot-docs-html-*; do
+          base_folder=$(basename "$folder")
+          echo "Copying $folder to workspace root as $base_folder"
+          cp -r "$folder" "$base_folder"
         done
 
     - name: Prepare docsets with doc2dash and icons
