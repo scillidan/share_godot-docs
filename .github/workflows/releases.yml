@@ -149,7 +149,7 @@ jobs:
             continue
           fi
           cp icon.png icon@2x.png "$folder/"
-          doc2dash --name "godot-$branch" -f "$folder/_build/html"
+          doc2dash --name "godot-$branch" -f "$folder"
         done
     - name: Create tgz archive of docsets
       run: |
