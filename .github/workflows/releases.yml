@@ -40,6 +40,8 @@ jobs:
         echo "workflow_id=$id" >> $GITHUB_OUTPUT
     - name: Get latest successful upstream run for build_offline_docs.yml
       id: upstream_run
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # Use workflow_id from previous step
         workflow_id=${{ steps.workflow_id.outputs.workflow_id }}
