@@ -149,12 +149,15 @@ jobs:
             continue
           fi
           cp icon.png icon@2x.png "$folder/"
-          doc2dash --name "godot-$branch" -f "$folder"
+          # Replace dot '.' in branch by underscore '_'
+          name_branch=$(echo "$branch" | tr '.' '_')
+          doc2dash --name "godot-$name_branch" -f "$folder/_build/html"
         done
     - name: Create tgz archive of docsets
       run: |
         for branch in master stable 3.6; do
-          docset_folder="godot-$branch.docset"
+          name_branch=$(echo "$branch" | tr '.' '_')
+          docset_folder="godot-$name_branch.docset"
           tgz_name="Godot-docset-$branch.tgz"
           if [ -d "$docset_folder" ]; then
             tar --exclude='.DS_Store' -czf "$tgz_name" "$docset_folder"
