@@ -2,8 +2,8 @@ name: Build docsets from godot-docs artifacts and publish release
 on:
   workflow_dispatch:
   # Optional schedule:
-  # schedule:
-  #   - cron: '0 1 * * 1'
+  schedule:
+    - cron: '0 1 * * 1'
 
 env:
   stable_version: '4.5'
