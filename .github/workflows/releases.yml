@@ -1,4 +1,4 @@
-name: Build docsets from godot-docs artifacts and publish release
+name: Create Releases
 on:
   workflow_dispatch:
   # Optional schedule:
