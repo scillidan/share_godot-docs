@@ -151,8 +151,6 @@ jobs:
 
     - name: Prepare docsets with doc2dash and icons
       run: |
-        curl -s -o icon.png https://raw.githubusercontent.com/Kapeli/Dash-User-Contributions/master/docsets/Godot/icon.png
-        curl -s -o icon@2x.png https://raw.githubusercontent.com/Kapeli/Dash-User-Contributions/master/docsets/Godot/icon@2x.png
         for branch in master ${{ env.stable_version }} 3.6; do
           name_branch=$(echo "$branch" | tr '.' '_')
           folder="godot-docs-html-$branch"
@@ -241,7 +239,6 @@ jobs:
       run: |
         # Create Godot.xml
         echo "<entry>" > Godot.xml
-        echo "  <style class=\"adjust-screen-brightness\" media=\"screen\">html::before, :not(:root):fullscreen::before { content: \" \"; z-index: 2147483647; pointer-events: none; position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.2); } :not(:root):fullscreen::backdrop { display: none; }</style>" >> Godot.xml
         echo "  <name>Godot</name>" >> Godot.xml
         echo "  <version>${{ env.stable_version }}</version>" >> Godot.xml
         echo "  <url>https://github.com/scillidan/share_godot-docs/releases/download/${{ steps.upstream_run.outputs.run_date }}/Godot-docset-${{ env.stable_version }}.tgz</url>" >> Godot.xml
@@ -254,7 +251,6 @@ jobs:
 
         # Create Godot3.xml
         echo "<entry>" > Godot3.xml
-        echo "  <style class=\"adjust-screen-brightness\" media=\"screen\"/>" >> Godot3.xml
         echo "  <name>Godot</name>" >> Godot3.xml
         echo "  <version>3.6</version>" >> Godot3.xml
         echo "  <url>https://github.com/scillidan/share_godot-docs/releases/download/${{ steps.upstream_run.outputs.run_date }}/Godot-docset-3.6.tgz</url>" >> Godot3.xml
