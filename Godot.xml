@@ -1,5 +1,4 @@
 <entry>
-  <style class="adjust-screen-brightness" media="screen">html::before, :not(:root):fullscreen::before { content: " "; z-index: 2147483647; pointer-events: none; position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.2); } :not(:root):fullscreen::backdrop { display: none; }</style>
   <name>Godot</name>
   <version>4.5</version>
   <url>https://github.com/scillidan/share_godot-docs/releases/download/20251006/Godot-docset-4.5.tgz</url>
