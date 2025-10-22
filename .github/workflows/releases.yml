@@ -190,6 +190,37 @@ jobs:
           fi
         done
 
+    - name: Create or update XML files
+      run: |
+        # Create Godot.xml
+        echo "<entry>" > Godot.xml
+        echo "  <name>Godot</name>" >> Godot.xml
+        echo "  <version>${{ env.stable_version }}</version>" >> Godot.xml
+        echo "  <url>https://github.com/scillidan/share_godot-docs/releases/download/${{ steps.upstream_run.outputs.run_date }}/Godot-docset-${{ env.stable_version }}.tgz</url>" >> Godot.xml
+        echo "  <other-versions>" >> Godot.xml
+        echo "    <version>" >> Godot.xml
+        echo "      <name>3.6</name>" >> Godot.xml
+        echo "    </version>" >> Godot.xml
+        echo "  </other-versions>" >> Godot.xml
+        echo "</entry>" >> Godot.xml
+
+        # Create Godot3.xml
+        echo "<entry>" > Godot3.xml
+        echo "  <name>Godot</name>" >> Godot3.xml
+        echo "  <version>3.6</version>" >> Godot3.xml
+        echo "  <url>https://github.com/scillidan/share_godot-docs/releases/download/${{ steps.upstream_run.outputs.run_date }}/Godot-docset-3.6.tgz</url>" >> Godot3.xml
+        echo "</entry>" >> Godot3.xml
+
+    - name: Upload XML files
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git add Godot.xml Godot3.xml
+        git commit -m "Update Godot.xml and Godot3.xml files for release ${{ steps.upstream_run.outputs.run_date }}"
+        git push
+
     - name: Create or update release and upload .tgz assets with body
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -234,34 +265,3 @@ jobs:
           -d "{\"body\":\"$body\"}"
     
         echo "Release description updated"
-
-    - name: Create or update XML files
-      run: |
-        # Create Godot.xml
-        echo "<entry>" > Godot.xml
-        echo "  <name>Godot</name>" >> Godot.xml
-        echo "  <version>${{ env.stable_version }}</version>" >> Godot.xml
-        echo "  <url>https://github.com/scillidan/share_godot-docs/releases/download/${{ steps.upstream_run.outputs.run_date }}/Godot-docset-${{ env.stable_version }}.tgz</url>" >> Godot.xml
-        echo "  <other-versions>" >> Godot.xml
-        echo "    <version>" >> Godot.xml
-        echo "      <name>3.6</name>" >> Godot.xml
-        echo "    </version>" >> Godot.xml
-        echo "  </other-versions>" >> Godot.xml
-        echo "</entry>" >> Godot.xml
-
-        # Create Godot3.xml
-        echo "<entry>" > Godot3.xml
-        echo "  <name>Godot</name>" >> Godot3.xml
-        echo "  <version>3.6</version>" >> Godot3.xml
-        echo "  <url>https://github.com/scillidan/share_godot-docs/releases/download/${{ steps.upstream_run.outputs.run_date }}/Godot-docset-3.6.tgz</url>" >> Godot3.xml
-        echo "</entry>" >> Godot3.xml
-
-    - name: Upload XML files
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-        git add Godot.xml Godot3.xml
-        git commit -m "Update Godot.xml and Godot3.xml files for release ${{ steps.upstream_run.outputs.run_date }}"
-        git push
