@@ -1,4 +1,4 @@
-name: Create Releases
+name: Create Releases (Downstream)
 on:
   workflow_dispatch:
   # Optional schedule:
