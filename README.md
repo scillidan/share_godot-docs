@@ -4,11 +4,11 @@
 
 Godot document files.
 
-The Docset is generated from HTML artifacts build by [official workflow](https://github.com/godotengine/godot-docs/actions/workflows/build_offline_docs.yml). 
+PS: After each major version update, I only keep one release from the previous version.
 
 ## Usage
 
-- The `Docset` if for [Zeal](https://zealdocs.org), [Dash](http://kapeli.com/dash), [Velocity](https://velocity.silverlakesoftware.com) or [docset.nvim](https://github.com/scillidan/docset.nvim)
+- The `Docset` is for [Zeal](https://zealdocs.org), [Dash](http://kapeli.com/dash), [Velocity](https://velocity.silverlakesoftware.com) or [docset.nvim](https://github.com/scillidan/docset.nvim)
 	- In Zeal → Tools → Docsets → Add feed:
 		- Godot 4: `https://raw.githubusercontent.com/scillidan/share_godot/refs/heads/main/Godot.xml`
 		- Godot 3: `https://raw.githubusercontent.com/scillidan/share_godot/refs/heads/main/Godot_3.xml`
